@@ -20,11 +20,14 @@ import com.hms.rowmapper.PatientRowMapper;
 @Repository
 public class PatientDAOImpl implements PatientDAO {
 
-	@Autowired
-	NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 	
 	@Autowired
 	PatientRowMapper patientRowMapper;
+
+	public PatientDAOImpl(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+		this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+	}
 	@Override
 	public List<Patient> allPatients() {
 		return namedParameterJdbcTemplate.query(Patient_Constant.FETCH_SQL, patientRowMapper);
