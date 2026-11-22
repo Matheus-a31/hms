@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -21,12 +20,11 @@ import com.hms.rowmapper.PatientRowMapper;
 public class PatientDAOImpl implements PatientDAO {
 
 	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-	
-	@Autowired
-	PatientRowMapper patientRowMapper;
+	private final PatientRowMapper patientRowMapper;
 
-	public PatientDAOImpl(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+	public PatientDAOImpl(NamedParameterJdbcTemplate namedParameterJdbcTemplate, PatientRowMapper patientRowMapper) {
 		this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+		this.patientRowMapper = patientRowMapper;
 	}
 	@Override
 	public List<Patient> allPatients() {
