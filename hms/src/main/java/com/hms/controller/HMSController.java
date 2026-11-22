@@ -24,8 +24,11 @@ import com.hms.service.HMSService;
 @RequestMapping("/hms")
 public class HMSController {
 	
-	@Autowired
-	HMSService service;
+	private final HMSService service;
+
+	public HMSController(HMSService service) {
+		this.service = service;
+	}
 	
 	@RequestMapping("/")
 	String home() {
