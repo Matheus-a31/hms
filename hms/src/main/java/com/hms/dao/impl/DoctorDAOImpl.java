@@ -20,11 +20,14 @@ import com.hms.rowmapper.DoctorRowMapper;
 @Repository
 public class DoctorDAOImpl implements DoctorDAO {
 
-	@Autowired
-	NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
 	@Autowired
 	DoctorRowMapper doctorRowMapper;
+
+	public DoctorDAOImpl(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+		this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+	}
 	
 	@Override
 	public List<Doctor> allDoctors(){
