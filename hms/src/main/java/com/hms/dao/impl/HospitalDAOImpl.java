@@ -14,11 +14,14 @@ import com.hms.rowmapper.HospitalRowMapper;
 @Repository
 public class HospitalDAOImpl implements HospitalDao {
 	
-	@Autowired
-	NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+	private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 	
 	@Autowired
 	HospitalRowMapper hospitalRowMapper;
+
+	public HospitalDAOImpl(NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+		this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
+	}
 	@Override
 	public List<Hospital> getHospital() {
 		return namedParameterJdbcTemplate.query(Hospital_Constant.FETCH_SQL, hospitalRowMapper);
