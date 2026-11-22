@@ -19,9 +19,9 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
-      - name: Build project and copy dependencies
+      - name: Build, test and generate coverage report
         working-directory: hms
-        run: mvn -B test-compile dependency:copy-dependencies
+        run: mvn -B test dependency:copy-dependencies
       - name: Cache SonarQube packages
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
