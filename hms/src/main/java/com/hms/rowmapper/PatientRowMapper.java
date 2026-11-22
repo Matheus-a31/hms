@@ -3,7 +3,6 @@ package com.hms.rowmapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
@@ -13,8 +12,11 @@ import com.hms.model.Patient;
 @Component
 public class PatientRowMapper implements RowMapper<Patient> {
 	
-	@Autowired
-	DoctorDAOImpl doctorDao;
+	private final DoctorDAOImpl doctorDao;
+
+	public PatientRowMapper(DoctorDAOImpl doctorDao) {
+		this.doctorDao = doctorDao;
+	}
 	
 	@Override
 	public Patient mapRow(ResultSet rs, int rowNum) throws SQLException {

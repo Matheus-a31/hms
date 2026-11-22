@@ -35,7 +35,15 @@ public class HmsUnitTest {
 
 	@Test
 	public void testPatientDAOImplConstructor() {
-		PatientDAOImpl dao = new PatientDAOImpl(null, new PatientRowMapper());
+		DoctorDAOImpl doctorDao = new DoctorDAOImpl(null, new DoctorRowMapper());
+		PatientDAOImpl dao = new PatientDAOImpl(null, new PatientRowMapper(doctorDao));
 		assertNotNull(dao);
+	}
+
+	@Test
+	public void testPatientRowMapperConstructor() {
+		DoctorDAOImpl doctorDao = new DoctorDAOImpl(null, new DoctorRowMapper());
+		PatientRowMapper mapper = new PatientRowMapper(doctorDao);
+		assertNotNull(mapper);
 	}
 }
