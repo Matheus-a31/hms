@@ -51,7 +51,7 @@ public class HMSController {
 		return listAllDoctors;
 	}
 	
-	@RequestMapping("/doctors/viewByName/{name}")
+	@RequestMapping(value = "/doctors/viewByName/{name}", method = RequestMethod.GET)
 	List<Map<String, Object>> doctorViewByName(@PathVariable("name") String name ) {
 		return service.searchDoctorByName(name);
 	}
