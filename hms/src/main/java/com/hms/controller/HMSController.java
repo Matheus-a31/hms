@@ -118,7 +118,7 @@ public class HMSController {
 	}
 	//Invoice 
 	
-	@RequestMapping("/invoice")
+	@RequestMapping(value = "/invoice", method = RequestMethod.GET)
 	List<Invoice> showinvoice(){
 		return service.showInvoice();
 	}
