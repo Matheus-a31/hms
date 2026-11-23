@@ -20,7 +20,8 @@ public class HmsUnitTest {
 	public void testHMSControllerConstructor() {
 		DoctorDAOImpl doctorDao = new DoctorDAOImpl(null, new DoctorRowMapper());
 		PatientDAOImpl patientDao = new PatientDAOImpl(null, new PatientRowMapper(doctorDao));
-		HMSController controller = new HMSController(new HMSService(doctorDao, patientDao, new InvoiceDAOImpl()));
+		HospitalDAOImpl hospitalDao = new HospitalDAOImpl(null, new HospitalRowMapper());
+		HMSController controller = new HMSController(new HMSService(doctorDao, patientDao, new InvoiceDAOImpl(), hospitalDao));
 		assertNotNull(controller);
 	}
 
@@ -28,7 +29,8 @@ public class HmsUnitTest {
 	public void testHMSServiceConstructor() {
 		DoctorDAOImpl doctorDao = new DoctorDAOImpl(null, new DoctorRowMapper());
 		PatientDAOImpl patientDao = new PatientDAOImpl(null, new PatientRowMapper(doctorDao));
-		HMSService service = new HMSService(doctorDao, patientDao, new InvoiceDAOImpl());
+		HospitalDAOImpl hospitalDao = new HospitalDAOImpl(null, new HospitalRowMapper());
+		HMSService service = new HMSService(doctorDao, patientDao, new InvoiceDAOImpl(), hospitalDao);
 		assertNotNull(service);
 	}
 

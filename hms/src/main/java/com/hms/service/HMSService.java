@@ -4,7 +4,6 @@ package com.hms.service;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.hms.dao.impl.DoctorDAOImpl;
@@ -22,14 +21,13 @@ public class HMSService {
 	private final DoctorDAOImpl doctorDao;
 	private final PatientDAOImpl patientDao;
 	private final InvoiceDAOImpl invoiceDao;
-	
-	@Autowired
-	HospitalDAOImpl hospitalDao;
+	private final HospitalDAOImpl hospitalDao;
 
-	public HMSService(DoctorDAOImpl doctorDao, PatientDAOImpl patientDao, InvoiceDAOImpl invoiceDao) {
+	public HMSService(DoctorDAOImpl doctorDao, PatientDAOImpl patientDao, InvoiceDAOImpl invoiceDao, HospitalDAOImpl hospitalDao) {
 		this.doctorDao = doctorDao;
 		this.patientDao = patientDao;
 		this.invoiceDao = invoiceDao;
+		this.hospitalDao = hospitalDao;
 	}
 	
 	List<Doctor> listDoctors;
