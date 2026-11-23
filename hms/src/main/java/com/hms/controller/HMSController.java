@@ -37,7 +37,7 @@ public class HMSController {
 	
 	//Hospital
 	
-	@RequestMapping("/hospital")
+	@RequestMapping(value = "/hospital", method = RequestMethod.GET)
 	List<Hospital> getHospital(){
 		return service.getHospital();
 	}
