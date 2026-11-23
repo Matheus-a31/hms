@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hms.dto.DoctorDTO;
 import com.hms.model.Doctor;
 import com.hms.model.Hospital;
 import com.hms.model.Invoice;
@@ -63,8 +64,8 @@ public class HMSController {
 	
 	@RequestMapping(value="/doctors/addDoctor",method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseStatus(value = HttpStatus.OK)
-	void addDoctor(@RequestBody Doctor doctor) throws Exception{
-		service.createDoctor(doctor);
+	void addDoctor(@RequestBody DoctorDTO doctorDto) throws Exception{
+		service.createDoctor(doctorDto.toEntity());
 	}
 	
 	@RequestMapping(value="/doctors/updateDoctor/{id}",method=RequestMethod.PUT,consumes=MediaType.APPLICATION_JSON_VALUE)
