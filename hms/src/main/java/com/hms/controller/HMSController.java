@@ -93,7 +93,7 @@ public class HMSController {
 		return service.searchPatientByName(name);
 	}
 	
-	@RequestMapping("/patients/viewById/{id}")
+	@RequestMapping(value = "/patients/viewById/{id}", method = RequestMethod.GET)
 	Patient patientViewById(@PathVariable("id") long id) {
 		return service.searchPatientById(id);
 	}
