@@ -7,6 +7,7 @@ import org.junit.Test;
 import com.hms.controller.HMSController;
 import com.hms.dao.impl.DoctorDAOImpl;
 import com.hms.dao.impl.HospitalDAOImpl;
+import com.hms.dao.impl.InvoiceDAOImpl;
 import com.hms.dao.impl.PatientDAOImpl;
 import com.hms.rowmapper.DoctorRowMapper;
 import com.hms.rowmapper.HospitalRowMapper;
@@ -19,7 +20,7 @@ public class HmsUnitTest {
 	public void testHMSControllerConstructor() {
 		DoctorDAOImpl doctorDao = new DoctorDAOImpl(null, new DoctorRowMapper());
 		PatientDAOImpl patientDao = new PatientDAOImpl(null, new PatientRowMapper(doctorDao));
-		HMSController controller = new HMSController(new HMSService(doctorDao, patientDao));
+		HMSController controller = new HMSController(new HMSService(doctorDao, patientDao, new InvoiceDAOImpl()));
 		assertNotNull(controller);
 	}
 
@@ -27,7 +28,7 @@ public class HmsUnitTest {
 	public void testHMSServiceConstructor() {
 		DoctorDAOImpl doctorDao = new DoctorDAOImpl(null, new DoctorRowMapper());
 		PatientDAOImpl patientDao = new PatientDAOImpl(null, new PatientRowMapper(doctorDao));
-		HMSService service = new HMSService(doctorDao, patientDao);
+		HMSService service = new HMSService(doctorDao, patientDao, new InvoiceDAOImpl());
 		assertNotNull(service);
 	}
 

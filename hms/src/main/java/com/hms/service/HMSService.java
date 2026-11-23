@@ -21,16 +21,15 @@ public class HMSService {
 	
 	private final DoctorDAOImpl doctorDao;
 	private final PatientDAOImpl patientDao;
-	
-	@Autowired
-	InvoiceDAOImpl invoiceDao;
+	private final InvoiceDAOImpl invoiceDao;
 	
 	@Autowired
 	HospitalDAOImpl hospitalDao;
 
-	public HMSService(DoctorDAOImpl doctorDao, PatientDAOImpl patientDao) {
+	public HMSService(DoctorDAOImpl doctorDao, PatientDAOImpl patientDao, InvoiceDAOImpl invoiceDao) {
 		this.doctorDao = doctorDao;
 		this.patientDao = patientDao;
+		this.invoiceDao = invoiceDao;
 	}
 	
 	List<Doctor> listDoctors;
