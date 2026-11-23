@@ -36,6 +36,7 @@ public class PatientDAOImpl implements PatientDAO {
 	@Override
 	public Patient createPatient(Patient patient) {
 		KeyHolder holder=new GeneratedKeyHolder();
+		Long doctorId = patient.getDoctor() != null ? patient.getDoctor().getId() : null;
 		SqlParameterSource parameter = new MapSqlParameterSource()
 				.addValue("address", patient.getAddress())
 				.addValue("contact_number", patient.getContactNumber())
@@ -43,7 +44,7 @@ public class PatientDAOImpl implements PatientDAO {
 				.addValue("email_id",patient.getEmailId())
 				.addValue("gender",patient.getGender())
 				.addValue("name", patient.getName())
-				.addValue("doctor", patient.getDoctor().getId());
+				.addValue("doctor", doctorId);
 		namedParameterJdbcTemplate.update(Patient_Constant.INSERT_SQL, parameter, holder);
 		patient.setId(holder.getKey().longValue());
 		return patient;
