@@ -56,7 +56,7 @@ public class HMSController {
 		return service.searchDoctorByName(name);
 	}
 	
-	@RequestMapping("/doctors/viewById/{id}")
+	@RequestMapping(value = "/doctors/viewById/{id}", method = RequestMethod.GET)
 	Doctor doctorViewById(@PathVariable("id") long id) {
 		return service.searchDoctorById(id);
 	}
