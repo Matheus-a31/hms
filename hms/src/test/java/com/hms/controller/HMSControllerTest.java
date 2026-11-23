@@ -146,4 +146,22 @@ public class HMSControllerTest {
 		assertNotNull(captured[0]);
 		assertEquals("Rahul", captured[0].getName());
 	}
+
+	@Test
+	public void testUpdatePatient() throws Exception {
+		final Patient[] captured = new Patient[1];
+		HMSService stubService = new HMSService(null, null, null, null) {
+			@Override
+			public void updatePatient(Patient patient) {
+				captured[0] = patient;
+			}
+		};
+		HMSController controller = new HMSController(stubService);
+
+		controller.updatePatient(99L, buildPatientDTO());
+
+		assertNotNull(captured[0]);
+		assertEquals(99L, captured[0].getId());
+		assertEquals("Rahul", captured[0].getName());
+	}
 }

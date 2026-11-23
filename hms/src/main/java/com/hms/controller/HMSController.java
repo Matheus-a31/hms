@@ -109,7 +109,8 @@ public class HMSController {
 	
 	@RequestMapping(value="/patients/updatePatient/{id}",method=RequestMethod.PUT,consumes=MediaType.APPLICATION_JSON_VALUE)
 	@ResponseStatus(value=HttpStatus.OK)
-	void updatePatient(@PathVariable("id") long id, @RequestBody Patient patient) throws Exception{
+	void updatePatient(@PathVariable("id") long id, @RequestBody PatientDTO patientDto) throws Exception{
+		Patient patient = patientDto.toEntity();
 		patient.setId(id);
 		service.updatePatient(patient);
 	}
