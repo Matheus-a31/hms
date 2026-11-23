@@ -68,4 +68,40 @@ public class PatientDAOImplTest {
 		assertEquals(11L, created.getId());
 		assertNull(capturedDoctorId[0]);
 	}
+
+	@Test
+	public void testUpdatePatientWithDoctor() {
+		final Object[] capturedDoctorId = new Object[1];
+		NamedParameterJdbcTemplate stubJdbc = new NamedParameterJdbcTemplate(new JdbcTemplate()) {
+			@Override
+			public int update(String sql, SqlParameterSource paramSource, KeyHolder generatedKeyHolder) {
+				capturedDoctorId[0] = paramSource.getValue("doctor");
+				return 1;
+			}
+		};
+		PatientDAOImpl dao = new PatientDAOImpl(stubJdbc, null);
+		Doctor doctor = new Doctor();
+		doctor.setId(8L);
+
+		dao.updatePatient(buildPatient(doctor));
+
+		assertEquals(8L, capturedDoctorId[0]);
+	}
+
+	@Test
+	public void testUpdatePatientWithoutDoctor() {
+		final Object[] capturedDoctorId = new Object[1];
+		NamedParameterJdbcTemplate stubJdbc = new NamedParameterJdbcTemplate(new JdbcTemplate()) {
+			@Override
+			public int update(String sql, SqlParameterSource paramSource, KeyHolder generatedKeyHolder) {
+				capturedDoctorId[0] = paramSource.getValue("doctor");
+				return 1;
+			}
+		};
+		PatientDAOImpl dao = new PatientDAOImpl(stubJdbc, null);
+
+		dao.updatePatient(buildPatient(null));
+
+		assertNull(capturedDoctorId[0]);
+	}
 }
