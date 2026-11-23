@@ -2,11 +2,14 @@ package com.hms.controller;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
 import com.hms.dto.DoctorDTO;
+import com.hms.dto.PatientDTO;
 import com.hms.model.Doctor;
+import com.hms.model.Patient;
 import com.hms.service.HMSService;
 
 public class HMSControllerTest {
@@ -83,5 +86,64 @@ public class HMSControllerTest {
 		assertNotNull(captured[0]);
 		assertEquals(42L, captured[0].getId());
 		assertEquals("Dr. John", captured[0].getName());
+	}
+
+	private PatientDTO buildPatientDTO() {
+		PatientDTO dto = new PatientDTO();
+		dto.setId(2L);
+		dto.setName("Rahul");
+		dto.setAddress("Vasai");
+		dto.setGender("Male");
+		dto.setDisease("Fever");
+		dto.setEmailId("rahul@mail.com");
+		dto.setContactNumber(8655312612L);
+		dto.setDoctor(buildDoctorDTO());
+		return dto;
+	}
+
+	@Test
+	public void testPatientDTOGettersAndToEntity() {
+		PatientDTO dto = buildPatientDTO();
+		assertEquals(2L, dto.getId());
+		assertEquals("Rahul", dto.getName());
+		assertEquals("Vasai", dto.getAddress());
+		assertEquals("Male", dto.getGender());
+		assertEquals("Fever", dto.getDisease());
+		assertEquals("rahul@mail.com", dto.getEmailId());
+		assertEquals(8655312612L, dto.getContactNumber());
+		assertNotNull(dto.getDoctor());
+
+		Patient entity = dto.toEntity();
+		assertNotNull(entity);
+		assertEquals(2L, entity.getId());
+		assertEquals("Rahul", entity.getName());
+		assertEquals("Vasai", entity.getAddress());
+		assertEquals("Male", entity.getGender());
+		assertEquals("Fever", entity.getDisease());
+		assertEquals("rahul@mail.com", entity.getEmailId());
+		assertEquals(8655312612L, entity.getContactNumber());
+		assertNotNull(entity.getDoctor());
+		assertEquals(1L, entity.getDoctor().getId());
+
+		dto.setDoctor(null);
+		assertNull(dto.toEntity().getDoctor());
+	}
+
+	@Test
+	public void testAddPatient() throws Exception {
+		final Patient[] captured = new Patient[1];
+		HMSService stubService = new HMSService(null, null, null, null) {
+			@Override
+			public Patient createPatient(Patient patient) {
+				captured[0] = patient;
+				return patient;
+			}
+		};
+		HMSController controller = new HMSController(stubService);
+
+		controller.addPatient(buildPatientDTO());
+
+		assertNotNull(captured[0]);
+		assertEquals("Rahul", captured[0].getName());
 	}
 }
