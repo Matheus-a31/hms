@@ -30,7 +30,7 @@ public class HMSController {
 		this.service = service;
 	}
 	
-	@RequestMapping("/")
+	@RequestMapping(value = "/", method = RequestMethod.GET)
 	String home() {
 		return "<h1>Welcome to Hospital Management System</h1>";
 	}
