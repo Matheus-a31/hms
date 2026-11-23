@@ -17,8 +17,16 @@ public class HmsUnitTest {
 
 	@Test
 	public void testHMSControllerConstructor() {
-		HMSController controller = new HMSController(new HMSService());
+		DoctorDAOImpl doctorDao = new DoctorDAOImpl(null, new DoctorRowMapper());
+		HMSController controller = new HMSController(new HMSService(doctorDao));
 		assertNotNull(controller);
+	}
+
+	@Test
+	public void testHMSServiceConstructor() {
+		DoctorDAOImpl doctorDao = new DoctorDAOImpl(null, new DoctorRowMapper());
+		HMSService service = new HMSService(doctorDao);
+		assertNotNull(service);
 	}
 
 	@Test

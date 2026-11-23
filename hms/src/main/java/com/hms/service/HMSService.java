@@ -19,8 +19,7 @@ import com.hms.model.Patient;
 @Service
 public class HMSService {
 	
-	@Autowired
-	DoctorDAOImpl doctorDao;
+	private final DoctorDAOImpl doctorDao;
 	
 	@Autowired
 	PatientDAOImpl patientDao;
@@ -30,6 +29,10 @@ public class HMSService {
 	
 	@Autowired
 	HospitalDAOImpl hospitalDao;
+
+	public HMSService(DoctorDAOImpl doctorDao) {
+		this.doctorDao = doctorDao;
+	}
 	
 	List<Doctor> listDoctors;
 	List<Patient> listPatients;
