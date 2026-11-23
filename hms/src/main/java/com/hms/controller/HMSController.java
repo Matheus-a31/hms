@@ -81,7 +81,7 @@ public class HMSController {
 	}
 	//Patients
 	
-	@RequestMapping("/patients")
+	@RequestMapping(value = "/patients", method = RequestMethod.GET)
 	List<Patient> showAllPatients(){
 		List<Patient> listAllPatients= new ArrayList<Patient>();
 		listAllPatients=service.showAllPatients();
