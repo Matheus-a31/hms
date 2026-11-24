@@ -1,31 +1,40 @@
 package com.hms.model;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import java.time.LocalDate;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 public class Invoice {
+
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
-	private long patientId;
-	private long doctorId;
-	private long billId;
+
+	@ManyToOne
+	@JoinColumn(name = "patient_id")
+	private Patient patient;
+
+	@ManyToOne
+	@JoinColumn(name = "doctor_id")
+	private Doctor doctor;
+
+	@ManyToOne
+	@JoinColumn(name = "bill_id")
+	private Bill bill;
+
 	private int totalAmount;
-	
+	private String invoiceType = "PACIENTE";
+	private LocalDate dueDate;
+	private String paymentStatus = "PENDENTE";
+
 	public Invoice() {
 		super();
-	}
-
-	public Invoice(long id, long patientId, long doctorId, long billId, int totalAmount) {
-		super();
-		this.id = id;
-		this.patientId = patientId;
-		this.doctorId = doctorId;
-		this.billId = billId;
-		this.totalAmount = totalAmount;
 	}
 
 	public long getId() {
@@ -36,28 +45,28 @@ public class Invoice {
 		this.id = id;
 	}
 
-	public long getPatientId() {
-		return patientId;
+	public Patient getPatient() {
+		return patient;
 	}
 
-	public void setPatientId(long patientId) {
-		this.patientId = patientId;
+	public void setPatient(Patient patient) {
+		this.patient = patient;
 	}
 
-	public long getDoctorId() {
-		return doctorId;
+	public Doctor getDoctor() {
+		return doctor;
 	}
 
-	public void setDoctorId(long doctorId) {
-		this.doctorId = doctorId;
+	public void setDoctor(Doctor doctor) {
+		this.doctor = doctor;
 	}
 
-	public long getBillId() {
-		return billId;
+	public Bill getBill() {
+		return bill;
 	}
 
-	public void setBillId(long billId) {
-		this.billId = billId;
+	public void setBill(Bill bill) {
+		this.bill = bill;
 	}
 
 	public int getTotalAmount() {
@@ -68,10 +77,27 @@ public class Invoice {
 		this.totalAmount = totalAmount;
 	}
 
-	@Override
-	public String toString() {
-		return "Invoice [id=" + id + ", patientId=" + patientId + ", doctorId=" + doctorId + ", billId=" + billId
-				+ ", totalAmount=" + totalAmount + "]";
+	public String getInvoiceType() {
+		return invoiceType;
 	}
-	
+
+	public void setInvoiceType(String invoiceType) {
+		this.invoiceType = invoiceType;
+	}
+
+	public LocalDate getDueDate() {
+		return dueDate;
+	}
+
+	public void setDueDate(LocalDate dueDate) {
+		this.dueDate = dueDate;
+	}
+
+	public String getPaymentStatus() {
+		return paymentStatus;
+	}
+
+	public void setPaymentStatus(String paymentStatus) {
+		this.paymentStatus = paymentStatus;
+	}
 }
