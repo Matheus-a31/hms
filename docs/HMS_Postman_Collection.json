@@ -1,0 +1,245 @@
+{
+  "info": {
+    "name": "HMS - Hospital Management System API v2.0",
+    "description": "Coleção Postman para testes locais (T07) — Autenticação JWT (15 min + Refresh Token), CRUDs padronizados com DTOs, Agendamentos & Vagas (Sol. 08), Lucro por Médico (Sol. 11) e Acessibilidade (Sol. 14).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{accessToken}}", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Autenticação (T09)",
+      "item": [
+        {
+          "name": "Login (salva Access Token 15 min + Refresh Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', data.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', data.refreshToken);",
+                  "pm.test('Access token expira em 900s (15 min)', () => pm.expect(data.expiresInSeconds).to.eql(900));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@hms.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": "{{baseUrl}}/hms/auth/login"
+          }
+        },
+        {
+          "name": "Cadastrar Usuário",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Novo Paciente\",\n  \"email\": \"novopaciente@hms.com\",\n  \"password\": \"senha123\",\n  \"role\": \"PACIENTE\"\n}"
+            },
+            "url": "{{baseUrl}}/hms/auth/register"
+          }
+        },
+        {
+          "name": "Renovar Access Token via Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', data.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', data.refreshToken);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/hms/auth/refresh"
+          }
+        },
+        {
+          "name": "Perfil Autenticado (/me)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/hms/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Hospital, Médicos e Pacientes (T04 / T06)",
+      "item": [
+        {
+          "name": "Listar Hospital",
+          "request": { "method": "GET", "url": "{{baseUrl}}/hms/hospital" }
+        },
+        {
+          "name": "Listar Médicos",
+          "request": { "method": "GET", "url": "{{baseUrl}}/hms/doctors" }
+        },
+        {
+          "name": "Criar Médico (201 Created)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr. Lucas Mendes\",\n  \"designation\": \"Ortopedista\",\n  \"degree\": \"MD Ortopedia\",\n  \"experience\": 9,\n  \"address\": \"Fortaleza-CE\",\n  \"emailId\": \"lucas@hms.com\",\n  \"contactNumber\": 85999110022\n}"
+            },
+            "url": "{{baseUrl}}/hms/doctors"
+          }
+        },
+        {
+          "name": "Listar Pacientes",
+          "request": { "method": "GET", "url": "{{baseUrl}}/hms/patients" }
+        },
+        {
+          "name": "Criar Paciente com Vínculo @ManyToOne (201 Created)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ana Paula\",\n  \"disease\": \"Enxaqueca\",\n  \"gender\": \"Feminino\",\n  \"emailId\": \"anapaula@email.com\",\n  \"contactNumber\": 85988776655,\n  \"address\": \"Aldeota, Fortaleza-CE\",\n  \"doctorId\": 1\n}"
+            },
+            "url": "{{baseUrl}}/hms/patients"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Contas (Bill) e Faturas (Invoice)",
+      "item": [
+        {
+          "name": "Listar Contas (Bill)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/hms/bills" }
+        },
+        {
+          "name": "Criar Item de Conta (Bill)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"particular\": \"Eletrocardiograma\",\n  \"quantity\": 1,\n  \"unitValue\": 280\n}"
+            },
+            "url": "{{baseUrl}}/hms/bills"
+          }
+        },
+        {
+          "name": "Listar Faturas (Invoice)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/hms/invoices" }
+        },
+        {
+          "name": "Emitir Nova Fatura",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": 1,\n  \"doctorId\": 1,\n  \"billId\": 1,\n  \"invoiceType\": \"PACIENTE\",\n  \"paymentStatus\": \"PENDENTE\"\n}"
+            },
+            "url": "{{baseUrl}}/hms/invoices"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Solicitação 08 - Agendamentos & Vagas",
+      "item": [
+        {
+          "name": "Listar Agendamentos",
+          "request": { "method": "GET", "url": "{{baseUrl}}/hms/appointments" }
+        },
+        {
+          "name": "Horários Disponíveis do Médico",
+          "request": { "method": "GET", "url": "{{baseUrl}}/hms/appointments/available?doctorId=1" }
+        },
+        {
+          "name": "Painel de Ocupação de Vagas (RF30)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/hms/appointments/occupancy" }
+        },
+        {
+          "name": "Agendar Nova Consulta (RF29)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": 1,\n  \"medicoId\": 1,\n  \"especialidade\": \"Cardiologia Clínica\",\n  \"dataHora\": \"2026-12-10T14:00:00\",\n  \"valorConsulta\": 420\n}"
+            },
+            "url": "{{baseUrl}}/hms/appointments"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Solicitação 11 - Lucro por Médico & Dashboard",
+      "item": [
+        {
+          "name": "Relatório Financeiro de Todos os Médicos (RF31)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/hms/doctors/financial-report" }
+        },
+        {
+          "name": "Relatório Financeiro por Médico ID=1 (RF31)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/hms/doctors/1/financial-report" }
+        },
+        {
+          "name": "Dashboard Financeiro Consolidado",
+          "request": { "method": "GET", "url": "{{baseUrl}}/hms/dashboard/summary" }
+        }
+      ]
+    },
+    {
+      "name": "6. Solicitação 14 - Acessibilidade (RF32)",
+      "item": [
+        {
+          "name": "Consultar Preferências de Acessibilidade",
+          "request": { "method": "GET", "url": "{{baseUrl}}/hms/preferences" }
+        },
+        {
+          "name": "Ativar Alto Contraste e Fonte Grande",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": 1,\n  \"altoContraste\": true,\n  \"tamanhoFonte\": \"large\",\n  \"focoAcentuado\": true\n}"
+            },
+            "url": "{{baseUrl}}/hms/preferences"
+          }
+        }
+      ]
+    }
+  ]
+}
