@@ -1,17 +1,19 @@
 package com.hms.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 public class Doctor {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name="Doctor_id")
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "Doctor_id")
 	private long id;
 	private String name;
 	private String designation;
@@ -20,6 +22,10 @@ public class Doctor {
 	private String address;
 	private String emailId;
 	private long contactNumber;
+
+	@ManyToOne
+	@JoinColumn(name = "hospital_id")
+	private Hospital hospital;
 
 	public Doctor() {
 		super();
@@ -36,51 +42,64 @@ public class Doctor {
 	public String getName() {
 		return name;
 	}
+
 	public void setName(String name) {
 		this.name = name;
 	}
+
 	public String getDesignation() {
 		return designation;
 	}
+
 	public void setDesignation(String designation) {
 		this.designation = designation;
 	}
+
 	public String getDegree() {
 		return degree;
 	}
+
 	public void setDegree(String degree) {
 		this.degree = degree;
 	}
+
 	public int getExperience() {
 		return experience;
 	}
+
 	public void setExperience(int experience) {
 		this.experience = experience;
 	}
+
 	public String getAddress() {
 		return address;
 	}
+
 	public void setAddress(String address) {
 		this.address = address;
 	}
+
 	public String getEmailId() {
 		return emailId;
 	}
+
 	public void setEmailId(String emailId) {
 		this.emailId = emailId;
 	}
+
 	public long getContactNumber() {
 		return contactNumber;
 	}
+
 	public void setContactNumber(long contactNumber) {
 		this.contactNumber = contactNumber;
 	}
 
-	@Override
-	public String toString() {
-		return "Doctor [id=" + id + ", name=" + name + ", designation=" + designation + ", degree=" + degree
-				+ ", experience=" + experience + ", address=" + address + ", emailId=" + emailId + ", contactNumber="
-				+ contactNumber + "]";
-	}	
-	
+	public Hospital getHospital() {
+		return hospital;
+	}
+
+	public void setHospital(Hospital hospital) {
+		this.hospital = hospital;
+	}
 }
