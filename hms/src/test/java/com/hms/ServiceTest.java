@@ -1,34 +1,29 @@
 package com.hms;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.util.Collections;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
-import com.hms.dao.impl.HospitalDAOImpl;
-import com.hms.model.Hospital;
-import com.hms.service.HMSService;
+import com.hms.dto.HospitalDTO;
+import com.hms.service.HospitalService;
 
-public class ServiceTest {
+@SpringBootTest
+class ServiceTest {
+
+	@Autowired
+	private HospitalService hospitalService;
 
 	@Test
-	public void testGetHospital() {
-		Hospital expected = new Hospital("City Care Hospital", "Dadar", "info@citycarehospital.com", 9568745896L);
-		HospitalDAOImpl hospitalDao = new HospitalDAOImpl(null, null) {
-			@Override
-			public List<Hospital> getHospital() {
-				return Collections.singletonList(expected);
-			}
-		};
-		HMSService service = new HMSService(null, null, null, hospitalDao);
-
-		List<Hospital> result = service.getHospital();
-
-		assertNotNull(result);
-		assertEquals(1, result.size());
-		assertEquals("City Care Hospital", result.get(0).getName());
+	void testGetHospital() {
+		List<HospitalDTO> hospitals = hospitalService.findAll();
+		assertNotNull(hospitals);
+		assertFalse(hospitals.isEmpty());
+		assertEquals("Hospital Central de Fortaleza", hospitals.get(0).name());
 	}
 }
