@@ -12,6 +12,41 @@ public class DoctorDTO {
 	private String address;
 	private String emailId;
 	private long contactNumber;
+	private Long hospitalId;
+	private String hospitalName;
+
+	public static DoctorDTO fromEntity(Doctor doctor) {
+		if (doctor == null) {
+			return null;
+		}
+		DoctorDTO dto = new DoctorDTO();
+		dto.setId(doctor.getId());
+		dto.setName(doctor.getName());
+		dto.setDesignation(doctor.getDesignation());
+		dto.setDegree(doctor.getDegree());
+		dto.setExperience(doctor.getExperience());
+		dto.setAddress(doctor.getAddress());
+		dto.setEmailId(doctor.getEmailId());
+		dto.setContactNumber(doctor.getContactNumber());
+		if (doctor.getHospital() != null) {
+			dto.setHospitalId(doctor.getHospital().getId());
+			dto.setHospitalName(doctor.getHospital().getName());
+		}
+		return dto;
+	}
+
+	public Doctor toEntity() {
+		Doctor doctor = new Doctor();
+		doctor.setId(this.id);
+		doctor.setName(this.name);
+		doctor.setDesignation(this.designation);
+		doctor.setDegree(this.degree);
+		doctor.setExperience(this.experience);
+		doctor.setAddress(this.address);
+		doctor.setEmailId(this.emailId);
+		doctor.setContactNumber(this.contactNumber);
+		return doctor;
+	}
 
 	public long getId() {
 		return id;
@@ -77,16 +112,19 @@ public class DoctorDTO {
 		this.contactNumber = contactNumber;
 	}
 
-	public Doctor toEntity() {
-		Doctor doctor = new Doctor();
-		doctor.setId(this.id);
-		doctor.setName(this.name);
-		doctor.setDesignation(this.designation);
-		doctor.setDegree(this.degree);
-		doctor.setExperience(this.experience);
-		doctor.setAddress(this.address);
-		doctor.setEmailId(this.emailId);
-		doctor.setContactNumber(this.contactNumber);
-		return doctor;
+	public Long getHospitalId() {
+		return hospitalId;
+	}
+
+	public void setHospitalId(Long hospitalId) {
+		this.hospitalId = hospitalId;
+	}
+
+	public String getHospitalName() {
+		return hospitalName;
+	}
+
+	public void setHospitalName(String hospitalName) {
+		this.hospitalName = hospitalName;
 	}
 }
