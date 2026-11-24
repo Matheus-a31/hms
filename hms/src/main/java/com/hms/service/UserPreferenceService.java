@@ -23,10 +23,11 @@ public class UserPreferenceService {
 		this.userPreferenceRepository = userPreferenceRepository;
 	}
 
+	@Transactional
 	public UserPreferenceDTO getPreferences(String email) {
 		UserAccount user = findUser(email);
 		UserPreference preference = userPreferenceRepository.findByUserId(user.getId())
-				.orElseGet(() -> createDefault(user));
+				.orElseGet(() -> saveDefault(user));
 		return UserPreferenceDTO.fromEntity(preference);
 	}
 
@@ -34,7 +35,7 @@ public class UserPreferenceService {
 	public UserPreferenceDTO updatePreferences(String email, UserPreferenceDTO dto) {
 		UserAccount user = findUser(email);
 		UserPreference preference = userPreferenceRepository.findByUserId(user.getId())
-				.orElseGet(() -> createDefault(user));
+				.orElseGet(() -> saveDefault(user));
 		preference.setHighContrast(dto.altoContraste());
 		preference.setFontSize("large".equalsIgnoreCase(dto.tamanhoFonte()) ? "large" : "normal");
 		preference.setEnhancedFocus(dto.focoAcentuado());
@@ -43,6 +44,10 @@ public class UserPreferenceService {
 
 	@Transactional
 	public UserPreference createDefault(UserAccount user) {
+		return saveDefault(user);
+	}
+
+	private UserPreference saveDefault(UserAccount user) {
 		UserPreference created = new UserPreference();
 		created.setUser(user);
 		created.setHighContrast(false);
