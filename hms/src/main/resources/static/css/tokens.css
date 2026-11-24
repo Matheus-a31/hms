@@ -1,0 +1,106 @@
+:root {
+	--bg-app: #f8fafc;
+	--bg-surface: #ffffff;
+	--bg-subtle: #f1f5f9;
+	--bg-sidebar: #0f172a;
+	--bg-sidebar-active: #1e293b;
+	--text-sidebar: #94a3b8;
+	--text-sidebar-title: #ffffff;
+	--text-sidebar-active: #38bdf8;
+	--text-primary: #0f172a;
+	--text-secondary: #475569;
+	--text-muted: #64748b;
+	--border-color: #e2e8f0;
+	--primary: #2563eb;
+	--primary-hover: #1d4ed8;
+	--primary-contrast: #ffffff;
+	--success: #16a34a;
+	--success-bg: #dcfce7;
+	--danger: #dc2626;
+	--danger-bg: #fee2e2;
+	--warning: #d97706;
+	--warning-bg: #fef3c7;
+	--focus-ring: #2563eb;
+	--radius: 10px;
+	--shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+	font-size: 16px;
+}
+
+/* Solicitação 14 (RF32) - Alto Contraste WCAG 2.1 AAA */
+[data-theme="high-contrast"] {
+	--bg-app: #000000;
+	--bg-surface: #0a0a0a;
+	--bg-subtle: #141414;
+	--bg-sidebar: #000000;
+	--bg-sidebar-active: #ffd60a;
+	--text-sidebar: #ffd60a;
+	--text-sidebar-title: #ffd60a;
+	--text-sidebar-active: #000000;
+	--text-primary: #ffffff;
+	--text-secondary: #ffd60a;
+	--text-muted: #e5e5e5;
+	--border-color: #ffd60a;
+	--primary: #ffd60a;
+	--primary-hover: #ffea70;
+	--primary-contrast: #000000;
+	--success: #70ff70;
+	--success-bg: #002b00;
+	--danger: #ff7070;
+	--danger-bg: #330000;
+	--warning: #ffd60a;
+	--warning-bg: #2e2400;
+	--focus-ring: #ffd60a;
+	--shadow: none;
+}
+
+[data-font-size="large"] {
+	font-size: 19px;
+}
+
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+	background: var(--bg-app);
+	color: var(--text-primary);
+	line-height: 1.5;
+	min-height: 100vh;
+}
+
+[data-focus-visible="enhanced"] :focus-visible {
+	outline: 3px solid var(--focus-ring);
+	outline-offset: 3px;
+	box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.25);
+}
+
+[data-theme="high-contrast"][data-focus-visible="enhanced"] :focus-visible {
+	outline: 3px solid #ffd60a;
+	outline-offset: 3px;
+	box-shadow: 0 0 0 6px rgba(255, 214, 10, 0.45);
+}
+
+.skip-link {
+	position: absolute;
+	left: -9999px;
+	top: 0;
+	background: var(--primary);
+	color: var(--primary-contrast);
+	padding: 0.75rem 1rem;
+	z-index: 1000;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.skip-link:focus {
+	left: 0.75rem;
+	top: 0.75rem;
+	border-radius: 6px;
+}
+
+.hidden {
+	display: none !important;
+}
