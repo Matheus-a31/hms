@@ -1,0 +1,11 @@
+design/
+hms/target/
+hms/hms_data/
+hms_data/
+*.mv.db
+*.trace.db
+hms/target/
+hms/hms_data/
+hms_data/
+*.mv.db
+*.trace.db
