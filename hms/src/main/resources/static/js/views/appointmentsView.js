@@ -29,23 +29,25 @@ export async function renderAppointmentsView(selectedDate = todayIso()) {
 }
 
 function buildBookingFormHtml(patients, occupancy, selectedDate) {
+	const isPatient = sessionStore.hasRole('PACIENTE');
 	const patientOptions = patients.map((p) => `<option value="${p.id}">${escapeHtml(p.name)} (#${p.id})</option>`).join('');
 	const doctorOptions = occupancy.map((o) =>
 		`<option value="${o.medicoId}" data-spec="${escapeHtml(o.especialidade)}">${escapeHtml(o.nomeMedico)} — ${o.vagasDisponiveis} vagas livres</option>`
 	).join('');
 	const defaultSpec = occupancy[0] ? occupancy[0].especialidade : 'Clínica Geral';
+	const lockedAttr = isPatient ? 'disabled' : '';
 
 	return `
 		<div class="card card-padded">
 			<h2 class="card-title">Novo Agendamento de Consulta (RF29)</h2>
 			<form id="appointment-form">
 				<div class="form-grid">
-					<div class="form-group"><label for="app-patient">Paciente Solicitante</label><select id="app-patient" required>${patientOptions}</select></div>
-					<div class="form-group"><label for="app-specialty">Área de Necessidade / Especialidade</label><input id="app-specialty" type="text" required value="${escapeHtml(defaultSpec)}"></div>
+					<div class="form-group"><label for="app-patient">Paciente Solicitante</label><select id="app-patient" required ${lockedAttr}>${patientOptions}</select></div>
+					<div class="form-group"><label for="app-specialty">Área de Necessidade / Especialidade</label><input id="app-specialty" type="text" required value="${escapeHtml(defaultSpec)}" ${lockedAttr}></div>
 					<div class="form-group"><label for="app-doctor">Médico Responsável (Vagas Disponíveis)</label><select id="app-doctor" required>${doctorOptions}</select></div>
 					<div class="form-group"><label for="app-date">Data da Consulta</label><input id="app-date" type="date" required value="${escapeHtml(selectedDate)}"></div>
 					<div class="form-group"><label for="app-slot">Horário Disponível</label><select id="app-slot" required></select></div>
-					<div class="form-group"><label for="app-fee">Valor da Consulta (R$)</label><input id="app-fee" type="number" min="50" required value="350"></div>
+					<div class="form-group"><label for="app-fee">Valor da Consulta (R$)</label><input id="app-fee" type="number" min="50" required value="350" ${lockedAttr}></div>
 				</div>
 				<div class="form-actions"><button type="submit" class="btn btn-primary">Agendar</button></div>
 			</form>

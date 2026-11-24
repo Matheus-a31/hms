@@ -548,8 +548,10 @@ class HmsIntegrationTest {
 
 		MvcResult ownApp = mockMvc.perform(post("/hms/appointments").header("Authorization", patientBearer)
 						.contentType(MediaType.APPLICATION_JSON)
-						.content("{\"pacienteId\":1,\"medicoId\":1,\"dataHora\":\"" + date + "T09:00:00\"}"))
+						.content("{\"pacienteId\":1,\"medicoId\":1,\"especialidade\":\"Especialidade Fraudada\",\"valorConsulta\":1,\"dataHora\":\"" + date + "T09:00:00\"}"))
 				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.especialidade").value("Cardiologista / Chefe"))
+				.andExpect(jsonPath("$.valorConsulta").value(350))
 				.andReturn();
 		long ownAppId = objectMapper.readTree(ownApp.getResponse().getContentAsString()).get("id").asLong();
 

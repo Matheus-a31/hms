@@ -36,6 +36,7 @@ public class AppointmentService {
 	private static final List<String> DAILY_SLOTS = List.of(
 			"08:00", "09:00", "10:30", "11:30", "14:00", "15:30", "16:30", "17:30");
 	private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
+	private static final int DEFAULT_CONSULTATION_FEE = 350;
 
 	private final AppointmentRepository appointmentRepository;
 	private final PatientRepository patientRepository;
@@ -88,18 +89,22 @@ public class AppointmentService {
 			throw new ConflictException("Horário indisponível: este médico já possui agendamento neste horário.");
 		}
 
+		boolean isPatient = authenticatedUserService.isPatientRole();
+		String specialty = !isPatient && request.especialidade() != null && !request.especialidade().isBlank()
+				? request.especialidade()
+				: doctor.getDesignation();
+		int consultationFee = !isPatient && request.valorConsulta() != null && request.valorConsulta() > 0
+				? request.valorConsulta()
+				: DEFAULT_CONSULTATION_FEE;
+
 		Appointment appointment = new Appointment();
 		appointment.setPatient(patient);
 		appointment.setDoctor(doctor);
 		appointment.setHospital(resolveHospital(request.hospitalId(), doctor));
-		appointment.setSpecialty(request.especialidade() != null && !request.especialidade().isBlank()
-				? request.especialidade()
-				: doctor.getDesignation());
+		appointment.setSpecialty(specialty);
 		appointment.setAppointmentDate(request.dataHora());
 		appointment.setStatus(AppointmentStatus.AGENDADO);
-		appointment.setConsultationFee(request.valorConsulta() != null && request.valorConsulta() > 0
-				? request.valorConsulta()
-				: 350);
+		appointment.setConsultationFee(consultationFee);
 		return AppointmentDTO.fromEntity(appointmentRepository.save(appointment));
 	}
 
