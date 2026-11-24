@@ -19,12 +19,12 @@ export function bindAuthScreen(onAuthenticated) {
 
 	document.getElementById('fill-admin-btn').addEventListener('click', () => {
 		document.getElementById('login-email').value = 'admin@hms.com';
-		document.getElementById('login-password').value = 'admin123';
+		document.getElementById('login-password').focus();
 	});
 
 	document.getElementById('fill-patient-btn').addEventListener('click', () => {
 		document.getElementById('login-email').value = 'paciente@hms.com';
-		document.getElementById('login-password').value = 'paciente123';
+		document.getElementById('login-password').focus();
 	});
 
 	loginForm.addEventListener('submit', async (e) => {
@@ -57,8 +57,8 @@ export function bindAuthScreen(onAuthenticated) {
 		}
 	});
 
-	document.getElementById('auth-contrast-toggle').addEventListener('click', () => {
-		updateAccessibilityPrefs({ altoContraste: !getAccessibilityPrefs().altoContraste });
+	document.getElementById('auth-contrast-toggle').addEventListener('click', async () => {
+		await updateAccessibilityPrefs({ altoContraste: !getAccessibilityPrefs().altoContraste });
 	});
 }
 
