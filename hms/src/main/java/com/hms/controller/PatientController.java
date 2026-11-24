@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,36 +33,42 @@ public class PatientController {
 	}
 
 	@GetMapping
+	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Listar todos os pacientes")
 	public ResponseEntity<List<PatientDTO>> findAll() {
 		return ResponseEntity.ok(patientService.findAll());
 	}
 
 	@GetMapping("/viewByName/{name}")
+	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Buscar pacientes por nome")
 	public ResponseEntity<List<PatientDTO>> findByName(@PathVariable("name") String name) {
 		return ResponseEntity.ok(patientService.findByName(name));
 	}
 
 	@GetMapping({"/{id}", "/viewById/{id}"})
+	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Buscar paciente por ID")
 	public ResponseEntity<PatientDTO> findById(@PathVariable("id") long id) {
 		return ResponseEntity.ok(patientService.findById(id));
 	}
 
 	@PostMapping(value = {"", "/addPatient"}, consumes = MediaType.APPLICATION_JSON_VALUE)
+	@PreAuthorize("hasRole('ADMIN')")
 	@Operation(summary = "Cadastrar novo paciente")
 	public ResponseEntity<PatientDTO> create(@RequestBody PatientDTO patientDto) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(patientService.create(patientDto));
 	}
 
 	@PutMapping(value = {"/{id}", "/updatePatient/{id}"}, consumes = MediaType.APPLICATION_JSON_VALUE)
+	@PreAuthorize("hasAnyRole('ADMIN', 'PACIENTE')")
 	@Operation(summary = "Atualizar paciente existente")
 	public ResponseEntity<PatientDTO> update(@PathVariable("id") long id, @RequestBody PatientDTO patientDto) {
 		return ResponseEntity.ok(patientService.update(id, patientDto));
 	}
 
 	@DeleteMapping({"/{id}", "/deletePatient/{id}"})
+	@PreAuthorize("hasRole('ADMIN')")
 	@Operation(summary = "Remover paciente")
 	public ResponseEntity<Void> delete(@PathVariable("id") long id) {
 		patientService.delete(id);

@@ -48,7 +48,7 @@ export function bindAuthScreen(onAuthenticated) {
 				name: document.getElementById('reg-name').value.trim(),
 				email: document.getElementById('reg-email').value.trim(),
 				password: document.getElementById('reg-password').value,
-				role: document.getElementById('reg-role').value
+				role: 'PACIENTE'
 			});
 			sessionStore.save(data);
 			await onAuthenticated();

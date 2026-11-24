@@ -14,11 +14,14 @@ import com.hms.dto.RefreshRequestDTO;
 import com.hms.dto.RegisterRequestDTO;
 import com.hms.exception.BadRequestException;
 import com.hms.exception.ConflictException;
+import com.hms.exception.ForbiddenException;
 import com.hms.exception.ResourceNotFoundException;
 import com.hms.exception.UnauthorizedException;
+import com.hms.model.Patient;
 import com.hms.model.RefreshToken;
 import com.hms.model.UserAccount;
 import com.hms.model.UserRole;
+import com.hms.repository.PatientRepository;
 import com.hms.repository.RefreshTokenRepository;
 import com.hms.repository.UserAccountRepository;
 import com.hms.security.JwtService;
@@ -29,6 +32,7 @@ public class AuthService {
 	private static final String BEARER = "Bearer";
 
 	private final UserAccountRepository userAccountRepository;
+	private final PatientRepository patientRepository;
 	private final RefreshTokenRepository refreshTokenRepository;
 	private final UserPreferenceService userPreferenceService;
 	private final PasswordEncoder passwordEncoder;
@@ -37,12 +41,14 @@ public class AuthService {
 
 	public AuthService(
 			UserAccountRepository userAccountRepository,
+			PatientRepository patientRepository,
 			RefreshTokenRepository refreshTokenRepository,
 			UserPreferenceService userPreferenceService,
 			PasswordEncoder passwordEncoder,
 			JwtService jwtService,
 			@Value("${hms.jwt.refresh-expiration-ms:604800000}") long refreshExpirationMs) {
 		this.userAccountRepository = userAccountRepository;
+		this.patientRepository = patientRepository;
 		this.refreshTokenRepository = refreshTokenRepository;
 		this.userPreferenceService = userPreferenceService;
 		this.passwordEncoder = passwordEncoder;
@@ -58,16 +64,29 @@ public class AuthService {
 		if (request.password().length() < 6) {
 			throw new BadRequestException("A senha deve ter no mínimo 6 caracteres.");
 		}
+		if (request.role() != null && request.role() != UserRole.PACIENTE) {
+			throw new ForbiddenException("Auto-cadastro permitido apenas para o perfil PACIENTE.");
+		}
 		String normalizedEmail = request.email().trim().toLowerCase();
 		if (userAccountRepository.existsByEmailIgnoreCase(normalizedEmail)) {
 			throw new ConflictException("Já existe um usuário cadastrado com este e-mail.");
 		}
 
+		Patient patient = new Patient();
+		patient.setName(request.name().trim());
+		patient.setEmailId(normalizedEmail);
+		patient.setDisease("Em avaliação");
+		patient.setGender("Não informado");
+		patient.setAddress("Não informado");
+		patient.setContactNumber(0L);
+		patient = patientRepository.save(patient);
+
 		UserAccount user = new UserAccount();
 		user.setName(request.name().trim());
 		user.setEmail(normalizedEmail);
 		user.setPasswordHash(passwordEncoder.encode(request.password()));
-		user.setRole(request.role() != null ? request.role() : UserRole.PACIENTE);
+		user.setRole(UserRole.PACIENTE);
+		user.setPatient(patient);
 		user = userAccountRepository.save(user);
 		userPreferenceService.createDefault(user);
 

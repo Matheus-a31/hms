@@ -7,6 +7,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -38,18 +39,21 @@ public class AppointmentController {
 	}
 
 	@GetMapping
+	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Listar agendamentos de consultas")
 	public ResponseEntity<List<AppointmentDTO>> findAll() {
 		return ResponseEntity.ok(appointmentService.findAll());
 	}
 
 	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+	@PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'PACIENTE')")
 	@Operation(summary = "Agendar consulta com validação de conflito de horário (RF29)")
 	public ResponseEntity<AppointmentDTO> create(@RequestBody AppointmentRequestDTO request) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(appointmentService.create(request));
 	}
 
 	@PatchMapping("/{id}/status")
+	@PreAuthorize("hasAnyRole('ADMIN', 'MEDICO', 'PACIENTE')")
 	@Operation(summary = "Atualizar status do agendamento")
 	public ResponseEntity<AppointmentDTO> updateStatus(
 			@PathVariable("id") long id,
@@ -58,6 +62,7 @@ public class AppointmentController {
 	}
 
 	@DeleteMapping("/{id}")
+	@PreAuthorize("hasRole('ADMIN')")
 	@Operation(summary = "Remover agendamento")
 	public ResponseEntity<Void> delete(@PathVariable("id") long id) {
 		appointmentService.delete(id);
@@ -65,6 +70,7 @@ public class AppointmentController {
 	}
 
 	@GetMapping("/available")
+	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Listar horários livres de um médico em uma data (RF29)")
 	public ResponseEntity<List<String>> getAvailableSlots(
 			@RequestParam("doctorId") long doctorId,
@@ -73,6 +79,7 @@ public class AppointmentController {
 	}
 
 	@GetMapping("/occupancy")
+	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Painel administrativo de ocupação de vagas por médico (RF30)")
 	public ResponseEntity<List<OccupancyDTO>> getOccupancyReport(
 			@RequestParam(value = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {

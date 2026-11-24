@@ -1,9 +1,11 @@
+import { sessionStore } from '../core/httpClient.js';
 import { escapeHtml, getViewContainer, setHeader, showToast } from '../core/ui.js';
 import { doctorApi } from '../services/hmsApi.js';
 
 export async function renderDoctorsView(filterText = '') {
 	setHeader('Médicos');
 	const doctors = await doctorApi.list();
+	const canManage = sessionStore.hasRole('ADMIN');
 	const filtered = doctors.filter((d) =>
 		!filterText || d.name.toLowerCase().includes(filterText.toLowerCase()));
 
@@ -13,33 +15,36 @@ export async function renderDoctorsView(filterText = '') {
 			<td><strong>${escapeHtml(d.name)}</strong></td>
 			<td class="text-muted">${escapeHtml(d.designation)}</td>
 			<td class="text-muted">${escapeHtml(d.emailId)}</td>
-			<td>
+			${canManage ? `<td>
 				<button type="button" class="link-btn" data-edit-doctor="${d.id}">Editar</button>
 				<span class="text-muted">|</span>
 				<button type="button" class="link-btn link-btn-danger" data-delete-doctor="${d.id}">Excluir</button>
-			</td>
+			</td>` : ''}
 		</tr>
 	`).join('');
 
 	getViewContainer().innerHTML = `
 		<div class="toolbar">
 			<input id="doctor-search" type="search" class="search-input" value="${escapeHtml(filterText)}" placeholder="Buscar médico por nome..." aria-label="Buscar médico por nome">
-			<button type="button" id="btn-new-doctor" class="btn btn-primary">+ Novo Médico</button>
+			${canManage ? '<button type="button" id="btn-new-doctor" class="btn btn-primary">+ Novo Médico</button>' : ''}
 		</div>
 		<div class="card">
 			<div class="table-wrap">
 				<table>
 					<thead>
-						<tr><th>ID</th><th>Nome</th><th>Especialidade / Cargo</th><th>E-mail</th><th>Ações</th></tr>
+						<tr><th>ID</th><th>Nome</th><th>Especialidade / Cargo</th><th>E-mail</th>${canManage ? '<th>Ações</th>' : ''}</tr>
 					</thead>
-					<tbody>${rows || '<tr><td colspan="5" class="text-muted">Nenhum médico encontrado.</td></tr>'}</tbody>
+					<tbody>${rows || `<tr><td colspan="${canManage ? 5 : 4}" class="text-muted">Nenhum médico encontrado.</td></tr>`}</tbody>
 				</table>
 			</div>
 		</div>
 	`;
 
 	document.getElementById('doctor-search').addEventListener('input', (e) => renderDoctorsView(e.target.value));
-	document.getElementById('btn-new-doctor').addEventListener('click', () => renderDoctorForm(null));
+	const newBtn = document.getElementById('btn-new-doctor');
+	if (newBtn) {
+		newBtn.addEventListener('click', () => renderDoctorForm(null));
+	}
 	document.querySelectorAll('[data-edit-doctor]').forEach((btn) => {
 		btn.addEventListener('click', () => renderDoctorForm(doctors.find((d) => d.id === Number(btn.dataset.editDoctor))));
 	});

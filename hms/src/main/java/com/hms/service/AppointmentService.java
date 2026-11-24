@@ -17,6 +17,7 @@ import com.hms.dto.AppointmentRequestDTO;
 import com.hms.dto.OccupancyDTO;
 import com.hms.exception.BadRequestException;
 import com.hms.exception.ConflictException;
+import com.hms.exception.ForbiddenException;
 import com.hms.exception.ResourceNotFoundException;
 import com.hms.model.Appointment;
 import com.hms.model.AppointmentStatus;
@@ -27,6 +28,7 @@ import com.hms.repository.AppointmentRepository;
 import com.hms.repository.DoctorRepository;
 import com.hms.repository.HospitalRepository;
 import com.hms.repository.PatientRepository;
+import com.hms.security.AuthenticatedUserService;
 
 @Service
 public class AppointmentService {
@@ -39,19 +41,31 @@ public class AppointmentService {
 	private final PatientRepository patientRepository;
 	private final DoctorRepository doctorRepository;
 	private final HospitalRepository hospitalRepository;
+	private final AuthenticatedUserService authenticatedUserService;
 
 	public AppointmentService(
 			AppointmentRepository appointmentRepository,
 			PatientRepository patientRepository,
 			DoctorRepository doctorRepository,
-			HospitalRepository hospitalRepository) {
+			HospitalRepository hospitalRepository,
+			AuthenticatedUserService authenticatedUserService) {
 		this.appointmentRepository = appointmentRepository;
 		this.patientRepository = patientRepository;
 		this.doctorRepository = doctorRepository;
 		this.hospitalRepository = hospitalRepository;
+		this.authenticatedUserService = authenticatedUserService;
 	}
 
 	public List<AppointmentDTO> findAll() {
+		if (authenticatedUserService.isPatientRole()) {
+			Long ownPatientId = authenticatedUserService.getCurrentPatientId();
+			if (ownPatientId == null) {
+				return List.of();
+			}
+			return appointmentRepository.findByPatientId(ownPatientId).stream()
+					.map(AppointmentDTO::fromEntity)
+					.toList();
+		}
 		return appointmentRepository.findAll().stream()
 				.map(AppointmentDTO::fromEntity)
 				.toList();
@@ -62,6 +76,7 @@ public class AppointmentService {
 		if (request == null || request.pacienteId() == null || request.medicoId() == null || request.dataHora() == null) {
 			throw new BadRequestException("Paciente, médico e data/hora são obrigatórios para agendamento.");
 		}
+		authenticatedUserService.assertCanAccessPatient(request.pacienteId());
 		Patient patient = patientRepository.findById(request.pacienteId())
 				.orElseThrow(() -> new ResourceNotFoundException("Paciente não encontrado: " + request.pacienteId()));
 		Doctor doctor = doctorRepository.findById(request.medicoId())
@@ -92,6 +107,13 @@ public class AppointmentService {
 	public AppointmentDTO updateStatus(long id, AppointmentStatus status) {
 		Appointment appointment = appointmentRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado: " + id));
+		if (authenticatedUserService.isPatientRole()) {
+			Long ownerId = appointment.getPatient() != null ? appointment.getPatient().getId() : null;
+			authenticatedUserService.assertCanAccessPatient(ownerId);
+			if (status != AppointmentStatus.CANCELADO) {
+				throw new ForbiddenException("Pacientes só podem cancelar seus próprios agendamentos.");
+			}
+		}
 		switch (status) {
 			case CONFIRMADO -> appointment.confirm();
 			case CANCELADO -> appointment.cancel();

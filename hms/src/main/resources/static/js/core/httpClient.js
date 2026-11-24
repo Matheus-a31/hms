@@ -31,6 +31,10 @@ export const sessionStore = {
 		localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
 		localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
 		localStorage.removeItem(STORAGE_KEYS.USER);
+	},
+	hasRole(...roles) {
+		const user = this.getUser();
+		return Boolean(user && roles.includes(user.role));
 	}
 };
 

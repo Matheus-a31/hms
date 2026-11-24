@@ -494,4 +494,77 @@ class HmsIntegrationTest {
 		mockMvc.perform(delete("/hms/invoices/" + linkedInvId).header("Authorization", bearer())).andExpect(status().isNoContent());
 		mockMvc.perform(delete("/hms/invoices/" + instInvId).header("Authorization", bearer())).andExpect(status().isNoContent());
 	}
+
+	@Test
+	void testRoleBasedAccessControlForPatientAndAdmin() throws Exception {
+		// Auto-cadastro público não pode criar conta ADMIN
+		mockMvc.perform(post("/hms/auth/register")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"name\":\"Hack\",\"email\":\"hack@hms.com\",\"password\":\"123456\",\"role\":\"ADMIN\"}"))
+				.andExpect(status().isForbidden());
+
+		// Login como PACIENTE
+		MvcResult patLogin = mockMvc.perform(post("/hms/auth/login")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"email\":\"paciente@hms.com\",\"password\":\"paciente123\"}"))
+				.andExpect(status().isOk())
+				.andReturn();
+		String patientBearer = "Bearer " + objectMapper.readTree(patLogin.getResponse().getContentAsString()).get("accessToken").asText();
+
+		// Rotas restritas a ADMIN / FINANCEIRO devem retornar 403
+		mockMvc.perform(put("/hms/hospital/1").header("Authorization", patientBearer)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"id\":1,\"name\":\"H\",\"address\":\"A\",\"website\":\"W\",\"contactNumber\":123}"))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(post("/hms/doctors").header("Authorization", patientBearer)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"name\":\"Dr. Bloqueado\"}"))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(delete("/hms/patients/1").header("Authorization", patientBearer))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(get("/hms/bills").header("Authorization", patientBearer))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(get("/hms/dashboard/summary").header("Authorization", patientBearer))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(get("/hms/doctors/financial-report").header("Authorization", patientBearer))
+				.andExpect(status().isForbidden());
+
+		// Escopo de dados do paciente: vê apenas o próprio registro (#1) e bloqueia IDOR (#2)
+		mockMvc.perform(get("/hms/patients").header("Authorization", patientBearer))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(1)))
+				.andExpect(jsonPath("$[0].id").value(1));
+		mockMvc.perform(get("/hms/patients/2").header("Authorization", patientBearer))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(get("/hms/invoices/2").header("Authorization", patientBearer))
+				.andExpect(status().isForbidden());
+
+		// Agendamento: paciente não pode agendar para outro paciente, mas pode agendar e cancelar o próprio
+		String date = LocalDate.now().plusDays(15).toString();
+		mockMvc.perform(post("/hms/appointments").header("Authorization", patientBearer)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"pacienteId\":2,\"medicoId\":1,\"dataHora\":\"" + date + "T09:00:00\"}"))
+				.andExpect(status().isForbidden());
+
+		MvcResult ownApp = mockMvc.perform(post("/hms/appointments").header("Authorization", patientBearer)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"pacienteId\":1,\"medicoId\":1,\"dataHora\":\"" + date + "T09:00:00\"}"))
+				.andExpect(status().isCreated())
+				.andReturn();
+		long ownAppId = objectMapper.readTree(ownApp.getResponse().getContentAsString()).get("id").asLong();
+
+		mockMvc.perform(patch("/hms/appointments/" + ownAppId + "/status?status=CONFIRMADO")
+						.header("Authorization", patientBearer))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(patch("/hms/appointments/" + ownAppId + "/status?status=CANCELADO")
+						.header("Authorization", patientBearer))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.status").value("CANCELADO"));
+		mockMvc.perform(delete("/hms/appointments/" + ownAppId).header("Authorization", patientBearer))
+				.andExpect(status().isForbidden());
+
+		// Limpeza com ADMIN
+		mockMvc.perform(delete("/hms/appointments/" + ownAppId).header("Authorization", bearer()))
+				.andExpect(status().isNoContent());
+	}
 }
