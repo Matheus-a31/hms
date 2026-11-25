@@ -1,9 +1,11 @@
+import { sessionStore } from '../core/httpClient.js';
 import { escapeHtml, getViewContainer, setHeader, showToast } from '../core/ui.js';
 import { doctorApi, patientApi } from '../services/hmsApi.js';
 
 export async function renderPatientsView(filterText = '') {
 	setHeader('Pacientes');
 	const [patients, doctors] = await Promise.all([patientApi.list(), doctorApi.list()]);
+	const canManage = sessionStore.hasRole('ADMIN');
 	const filtered = patients.filter((p) =>
 		!filterText || p.name.toLowerCase().includes(filterText.toLowerCase()));
 
@@ -13,33 +15,36 @@ export async function renderPatientsView(filterText = '') {
 			<td><strong>${escapeHtml(p.name)}</strong></td>
 			<td class="text-muted">${escapeHtml(p.disease)}</td>
 			<td>${p.doctor ? `${escapeHtml(p.doctor.name)} (#${p.doctor.id})` : '<span class="text-muted">Sem vínculo</span>'}</td>
-			<td>
+			${canManage ? `<td>
 				<button type="button" class="link-btn" data-edit-patient="${p.id}">Editar</button>
 				<span class="text-muted">|</span>
 				<button type="button" class="link-btn link-btn-danger" data-delete-patient="${p.id}">Excluir</button>
-			</td>
+			</td>` : ''}
 		</tr>
 	`).join('');
 
 	getViewContainer().innerHTML = `
 		<div class="toolbar">
 			<input id="patient-search" type="search" class="search-input" value="${escapeHtml(filterText)}" placeholder="Buscar paciente por nome..." aria-label="Buscar paciente por nome">
-			<button type="button" id="btn-new-patient" class="btn btn-primary">+ Novo Paciente</button>
+			${canManage ? '<button type="button" id="btn-new-patient" class="btn btn-primary">+ Novo Paciente</button>' : ''}
 		</div>
 		<div class="card">
 			<div class="table-wrap">
 				<table>
 					<thead>
-						<tr><th>ID</th><th>Paciente</th><th>Enfermidade</th><th>Médico Responsável</th><th>Ações</th></tr>
+						<tr><th>ID</th><th>Paciente</th><th>Enfermidade</th><th>Médico Responsável</th>${canManage ? '<th>Ações</th>' : ''}</tr>
 					</thead>
-					<tbody>${rows || '<tr><td colspan="5" class="text-muted">Nenhum paciente encontrado.</td></tr>'}</tbody>
+					<tbody>${rows || `<tr><td colspan="${canManage ? 5 : 4}" class="text-muted">Nenhum paciente encontrado.</td></tr>`}</tbody>
 				</table>
 			</div>
 		</div>
 	`;
 
 	document.getElementById('patient-search').addEventListener('input', (e) => renderPatientsView(e.target.value));
-	document.getElementById('btn-new-patient').addEventListener('click', () => renderPatientForm(null, doctors));
+	const newBtn = document.getElementById('btn-new-patient');
+	if (newBtn) {
+		newBtn.addEventListener('click', () => renderPatientForm(null, doctors));
+	}
 	document.querySelectorAll('[data-edit-patient]').forEach((btn) => {
 		btn.addEventListener('click', () =>
 			renderPatientForm(patients.find((p) => p.id === Number(btn.dataset.editPatient)), doctors));

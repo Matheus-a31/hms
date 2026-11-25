@@ -1,3 +1,4 @@
+import { sessionStore } from '../core/httpClient.js';
 import { closeModal, escapeHtml, getViewContainer, openModal, setHeader, showToast } from '../core/ui.js';
 import { hospitalApi } from '../services/hmsApi.js';
 
@@ -9,6 +10,7 @@ export async function renderHospitalView() {
 		getViewContainer().innerHTML = '<div class="card card-padded">Nenhum hospital cadastrado.</div>';
 		return;
 	}
+	const canEdit = sessionStore.hasRole('ADMIN');
 
 	getViewContainer().innerHTML = `
 		<div class="card">
@@ -24,13 +26,16 @@ export async function renderHospitalView() {
 				<div class="info-item"><div class="info-label">Identificador no Sistema (ID)</div><div class="info-value">#HOSP-0${hosp.id}</div></div>
 				<div class="info-item"><div class="info-label">Situação do Cadastro</div><div class="info-value"><span class="badge badge-success">● Ativo no HMS</span></div></div>
 			</div>
-			<div class="form-actions" style="padding:0 1.75rem 1.5rem">
+			${canEdit ? `<div class="form-actions" style="padding:0 1.75rem 1.5rem">
 				<button type="button" id="edit-hospital-btn" class="btn btn-primary">Editar Cadastro</button>
-			</div>
+			</div>` : ''}
 		</div>
 	`;
 
-	document.getElementById('edit-hospital-btn').addEventListener('click', () => openHospitalEditModal(hosp));
+	const editBtn = document.getElementById('edit-hospital-btn');
+	if (editBtn) {
+		editBtn.addEventListener('click', () => openHospitalEditModal(hosp));
+	}
 }
 
 function openHospitalEditModal(hosp) {

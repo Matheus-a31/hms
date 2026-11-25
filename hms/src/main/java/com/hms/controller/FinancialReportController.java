@@ -3,6 +3,7 @@ package com.hms.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,18 +28,21 @@ public class FinancialReportController {
 	}
 
 	@GetMapping("/doctors/financial-report")
+	@PreAuthorize("hasAnyRole('ADMIN', 'FINANCEIRO')")
 	@Operation(summary = "Relatório financeiro e lucro consolidado de todos os médicos (RF31)")
 	public ResponseEntity<List<RelatorioMedicoDTO>> getAllDoctorsReport() {
 		return ResponseEntity.ok(financialReportService.getAllDoctorsReport());
 	}
 
 	@GetMapping("/doctors/{id}/financial-report")
+	@PreAuthorize("hasAnyRole('ADMIN', 'FINANCEIRO', 'MEDICO')")
 	@Operation(summary = "Relatório financeiro e histórico de consultas por médico (RF31)")
 	public ResponseEntity<RelatorioMedicoDTO> getDoctorReport(@PathVariable("id") long id) {
 		return ResponseEntity.ok(financialReportService.getDoctorReport(id));
 	}
 
 	@GetMapping("/dashboard/summary")
+	@PreAuthorize("hasAnyRole('ADMIN', 'FINANCEIRO')")
 	@Operation(summary = "Indicadores consolidados do Dashboard Financeiro & Lucros")
 	public ResponseEntity<DashboardSummaryDTO> getDashboardSummary() {
 		return ResponseEntity.ok(financialReportService.getDashboardSummary());

@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -32,6 +33,16 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(UnauthorizedException.class)
 	public ResponseEntity<ApiErrorDTO> handleUnauthorized(UnauthorizedException ex, HttpServletRequest request) {
 		return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
+	}
+
+	@ExceptionHandler(ForbiddenException.class)
+	public ResponseEntity<ApiErrorDTO> handleForbidden(ForbiddenException ex, HttpServletRequest request) {
+		return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request);
+	}
+
+	@ExceptionHandler(AccessDeniedException.class)
+	public ResponseEntity<ApiErrorDTO> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+		return buildResponse(HttpStatus.FORBIDDEN, "Acesso negado: permissão insuficiente.", request);
 	}
 
 	private ResponseEntity<ApiErrorDTO> buildResponse(HttpStatus status, String message, HttpServletRequest request) {

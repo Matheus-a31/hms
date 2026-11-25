@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -36,12 +37,14 @@ public class HospitalController {
 	}
 
 	@GetMapping("/hospital")
+	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Listar instituições hospitalares")
 	public ResponseEntity<List<HospitalDTO>> getHospital() {
 		return ResponseEntity.ok(hospitalService.findAll());
 	}
 
 	@PutMapping(value = "/hospital/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+	@PreAuthorize("hasRole('ADMIN')")
 	@Operation(summary = "Atualizar dados institucionais do hospital")
 	public ResponseEntity<HospitalDTO> updateHospital(@PathVariable("id") long id, @RequestBody HospitalDTO dto) {
 		return ResponseEntity.ok(hospitalService.update(id, dto));

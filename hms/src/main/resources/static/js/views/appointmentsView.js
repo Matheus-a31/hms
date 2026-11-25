@@ -1,3 +1,4 @@
+import { sessionStore } from '../core/httpClient.js';
 import { escapeHtml, getViewContainer, setHeader, showToast, todayIso } from '../core/ui.js';
 import { appointmentApi, patientApi } from '../services/hmsApi.js';
 
@@ -28,23 +29,25 @@ export async function renderAppointmentsView(selectedDate = todayIso()) {
 }
 
 function buildBookingFormHtml(patients, occupancy, selectedDate) {
+	const isPatient = sessionStore.hasRole('PACIENTE');
 	const patientOptions = patients.map((p) => `<option value="${p.id}">${escapeHtml(p.name)} (#${p.id})</option>`).join('');
 	const doctorOptions = occupancy.map((o) =>
 		`<option value="${o.medicoId}" data-spec="${escapeHtml(o.especialidade)}">${escapeHtml(o.nomeMedico)} — ${o.vagasDisponiveis} vagas livres</option>`
 	).join('');
 	const defaultSpec = occupancy[0] ? occupancy[0].especialidade : 'Clínica Geral';
+	const lockedAttr = isPatient ? 'disabled' : '';
 
 	return `
 		<div class="card card-padded">
 			<h2 class="card-title">Novo Agendamento de Consulta (RF29)</h2>
 			<form id="appointment-form">
 				<div class="form-grid">
-					<div class="form-group"><label for="app-patient">Paciente Solicitante</label><select id="app-patient" required>${patientOptions}</select></div>
-					<div class="form-group"><label for="app-specialty">Área de Necessidade / Especialidade</label><input id="app-specialty" type="text" required value="${escapeHtml(defaultSpec)}"></div>
+					<div class="form-group"><label for="app-patient">Paciente Solicitante</label><select id="app-patient" required ${lockedAttr}>${patientOptions}</select></div>
+					<div class="form-group"><label for="app-specialty">Área de Necessidade / Especialidade</label><input id="app-specialty" type="text" required value="${escapeHtml(defaultSpec)}" ${lockedAttr}></div>
 					<div class="form-group"><label for="app-doctor">Médico Responsável (Vagas Disponíveis)</label><select id="app-doctor" required>${doctorOptions}</select></div>
 					<div class="form-group"><label for="app-date">Data da Consulta</label><input id="app-date" type="date" required value="${escapeHtml(selectedDate)}"></div>
 					<div class="form-group"><label for="app-slot">Horário Disponível</label><select id="app-slot" required></select></div>
-					<div class="form-group"><label for="app-fee">Valor da Consulta (R$)</label><input id="app-fee" type="number" min="50" required value="350"></div>
+					<div class="form-group"><label for="app-fee">Valor da Consulta (R$)</label><input id="app-fee" type="number" min="50" required value="350" ${lockedAttr}></div>
 				</div>
 				<div class="form-actions"><button type="submit" class="btn btn-primary">Agendar</button></div>
 			</form>
@@ -78,6 +81,7 @@ function buildOccupancyTableHtml(occupancy) {
 }
 
 function buildAppointmentsTableHtml(appointments) {
+	const canManageStatus = sessionStore.hasRole('ADMIN', 'MEDICO');
 	const rows = appointments.map((a) => `
 		<tr>
 			<td class="text-muted">#AG-${a.id}</td>
@@ -87,9 +91,9 @@ function buildAppointmentsTableHtml(appointments) {
 			<td>${escapeHtml((a.dataHora || '').replace('T', ' '))}</td>
 			<td><span class="badge ${statusBadgeClass(a.status)}">${escapeHtml(a.status)}</span></td>
 			<td>
-				${a.status === 'AGENDADO' ? `<button type="button" class="link-btn" data-app-status="${a.id}:CONFIRMADO">Confirmar</button>` : ''}
-				${a.status !== 'CONCLUIDO' && a.status !== 'CANCELADO' ? `<button type="button" class="link-btn" data-app-status="${a.id}:CONCLUIDO">Concluir</button>` : ''}
-				${a.status !== 'CANCELADO' ? `<button type="button" class="link-btn link-btn-danger" data-app-status="${a.id}:CANCELADO">Cancelar</button>` : ''}
+				${canManageStatus && a.status === 'AGENDADO' ? `<button type="button" class="link-btn" data-app-status="${a.id}:CONFIRMADO">Confirmar</button>` : ''}
+				${canManageStatus && a.status !== 'CONCLUIDO' && a.status !== 'CANCELADO' ? `<button type="button" class="link-btn" data-app-status="${a.id}:CONCLUIDO">Concluir</button>` : ''}
+				${a.status !== 'CANCELADO' && a.status !== 'CONCLUIDO' ? `<button type="button" class="link-btn link-btn-danger" data-app-status="${a.id}:CANCELADO">Cancelar</button>` : ''}
 			</td>
 		</tr>
 	`).join('');
