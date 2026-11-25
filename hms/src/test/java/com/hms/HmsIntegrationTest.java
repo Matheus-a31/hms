@@ -18,11 +18,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hms.model.UserAccount;
+import com.hms.model.UserRole;
+import com.hms.repository.UserAccountRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -33,6 +37,12 @@ class HmsIntegrationTest {
 
 	@Autowired
 	private ObjectMapper objectMapper;
+
+	@Autowired
+	private UserAccountRepository userAccountRepository;
+
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 
 	private String accessToken;
 	private String refreshToken;
@@ -561,5 +571,98 @@ class HmsIntegrationTest {
 		// Limpeza com ADMIN
 		mockMvc.perform(delete("/hms/appointments/" + ownAppId).header("Authorization", bearer()))
 				.andExpect(status().isNoContent());
+
+		// Auto-cadastro sem role (null -> PACIENTE por padrão)
+		String nullRoleEmail = "nullrole" + System.nanoTime() + "@hms.com";
+		mockMvc.perform(post("/hms/auth/register")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"name\":\"Paciente Padrao\",\"email\":\"" + nullRoleEmail + "\",\"password\":\"senha123\"}"))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.role").value("PACIENTE"));
+
+		// Escopo completo de PACIENTE vinculado (#1): faturas, pacientes, busca por nome, atualização e agendamentos
+		mockMvc.perform(get("/hms/invoices").header("Authorization", patientBearer))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(greaterThan(0))));
+		mockMvc.perform(get("/hms/invoices/1").header("Authorization", patientBearer))
+				.andExpect(status().isOk());
+
+		// Fatura institucional (patient == null) não pode ser lida por PACIENTE
+		MvcResult instInv = mockMvc.perform(post("/hms/invoices")
+						.header("Authorization", bearer())
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"totalAmount\":200,\"invoiceType\":\"INSTITUCIONAL\"}"))
+				.andExpect(status().isCreated())
+				.andReturn();
+		long instInvId = objectMapper.readTree(instInv.getResponse().getContentAsString()).get("id").asLong();
+		mockMvc.perform(get("/hms/invoices/" + instInvId).header("Authorization", patientBearer))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(delete("/hms/invoices/" + instInvId).header("Authorization", bearer()))
+				.andExpect(status().isNoContent());
+
+		// Busca e atualização de paciente próprio vs outro paciente
+		mockMvc.perform(get("/hms/patients/1").header("Authorization", patientBearer))
+				.andExpect(status().isOk());
+		mockMvc.perform(get("/hms/patients/viewByName/a").header("Authorization", patientBearer))
+				.andExpect(status().isOk());
+		mockMvc.perform(put("/hms/patients/1")
+						.header("Authorization", patientBearer)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"name\":\"Maria Clara Souza\",\"address\":\"Aldeota\",\"gender\":\"Feminino\",\"disease\":\"Checkup\",\"emailId\":\"paciente@hms.com\",\"contactNumber\":85988887777}"))
+				.andExpect(status().isOk());
+		mockMvc.perform(put("/hms/patients/2")
+						.header("Authorization", patientBearer)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"name\":\"Outro\",\"address\":\"Centro\",\"gender\":\"Masculino\",\"disease\":\"Gripe\",\"emailId\":\"outro@hms.com\",\"contactNumber\":85988880000}"))
+				.andExpect(status().isForbidden());
+
+		// Listagem de agendamentos do próprio paciente + tentativa de cancelar agendamento de outro paciente (#2)
+		mockMvc.perform(get("/hms/appointments").header("Authorization", patientBearer))
+				.andExpect(status().isOk());
+		String otherDate = LocalDate.now().plusDays(16).toString();
+		MvcResult otherApp = mockMvc.perform(post("/hms/appointments")
+						.header("Authorization", bearer())
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"pacienteId\":2,\"medicoId\":1,\"dataHora\":\"" + otherDate + "T10:30:00\"}"))
+				.andExpect(status().isCreated())
+				.andReturn();
+		long otherAppId = objectMapper.readTree(otherApp.getResponse().getContentAsString()).get("id").asLong();
+		mockMvc.perform(patch("/hms/appointments/" + otherAppId + "/status?status=CANCELADO")
+						.header("Authorization", patientBearer))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(delete("/hms/appointments/" + otherAppId).header("Authorization", bearer()))
+				.andExpect(status().isNoContent());
+
+		// PACIENTE sem vínculo com entidade Patient (ownPatientId == null) recebe listas vazias e 403 em acessos diretos
+		String unlinkedEmail = "unlinked" + System.nanoTime() + "@hms.com";
+		UserAccount unlinkedUser = new UserAccount();
+		unlinkedUser.setName("Paciente Sem Vinculo");
+		unlinkedUser.setEmail(unlinkedEmail);
+		unlinkedUser.setPasswordHash(passwordEncoder.encode("senha123"));
+		unlinkedUser.setRole(UserRole.PACIENTE);
+		unlinkedUser.setPatient(null);
+		userAccountRepository.save(unlinkedUser);
+
+		MvcResult unlinkedLogin = mockMvc.perform(post("/hms/auth/login")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"email\":\"" + unlinkedEmail + "\",\"password\":\"senha123\"}"))
+				.andExpect(status().isOk())
+				.andReturn();
+		String unlinkedBearer = "Bearer " + objectMapper.readTree(unlinkedLogin.getResponse().getContentAsString()).get("accessToken").asText();
+
+		mockMvc.perform(get("/hms/invoices").header("Authorization", unlinkedBearer))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(0)));
+		mockMvc.perform(get("/hms/patients").header("Authorization", unlinkedBearer))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(0)));
+		mockMvc.perform(get("/hms/patients/viewByName/a").header("Authorization", unlinkedBearer))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(0)));
+		mockMvc.perform(get("/hms/appointments").header("Authorization", unlinkedBearer))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(0)));
+		mockMvc.perform(get("/hms/patients/1").header("Authorization", unlinkedBearer))
+				.andExpect(status().isForbidden());
 	}
 }
