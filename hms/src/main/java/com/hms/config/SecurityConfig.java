@@ -16,8 +16,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 import com.hms.security.JwtAuthenticationFilter;
+import com.hms.security.StatelessCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -25,15 +27,21 @@ import com.hms.security.JwtAuthenticationFilter;
 public class SecurityConfig {
 
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
+	private final StatelessCsrfTokenRepository csrfTokenRepository;
 
-	public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+	public SecurityConfig(
+			JwtAuthenticationFilter jwtAuthenticationFilter,
+			StatelessCsrfTokenRepository csrfTokenRepository) {
 		this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+		this.csrfTokenRepository = csrfTokenRepository;
 	}
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
-				.csrf(csrf -> csrf.disable())
+				.csrf(csrf -> csrf
+						.csrfTokenRepository(csrfTokenRepository)
+						.csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
 				.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
 				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.exceptionHandling(ex -> ex
