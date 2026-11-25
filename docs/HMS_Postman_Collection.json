@@ -7,7 +7,33 @@
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:8080" },
     { "key": "accessToken", "value": "" },
-    { "key": "refreshToken", "value": "" }
+    { "key": "refreshToken", "value": "" },
+    { "key": "csrfToken", "value": "" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const method = pm.request.method.toUpperCase();",
+          "if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {",
+          "  const cached = pm.collectionVariables.get('csrfToken');",
+          "  if (cached) {",
+          "    pm.request.headers.upsert({ key: 'X-CSRF-TOKEN', value: cached });",
+          "  } else {",
+          "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/hms/auth/csrf', (err, res) => {",
+          "      if (!err && res && res.code === 200) {",
+          "        const token = res.json().token;",
+          "        pm.collectionVariables.set('csrfToken', token);",
+          "        pm.request.headers.upsert({ key: 'X-CSRF-TOKEN', value: token });",
+          "      }",
+          "    });",
+          "  }",
+          "}"
+        ]
+      }
+    }
   ],
   "auth": {
     "type": "bearer",
