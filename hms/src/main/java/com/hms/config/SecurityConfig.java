@@ -1,8 +1,13 @@
 package com.hms.config;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -16,6 +21,7 @@ import com.hms.security.JwtAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -30,7 +36,17 @@ public class SecurityConfig {
 				.csrf(csrf -> csrf.disable())
 				.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
 				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.exceptionHandling(ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+				.exceptionHandling(ex -> ex
+						.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+						.accessDeniedHandler((request, response, accessDeniedException) -> {
+							response.setStatus(HttpStatus.FORBIDDEN.value());
+							response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+							response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+							String body = String.format(
+									"{\"timestamp\":\"%s\",\"status\":403,\"error\":\"Forbidden\",\"message\":\"Acesso negado: permissão insuficiente.\",\"path\":\"%s\"}",
+									Instant.now(), request.getRequestURI());
+							response.getWriter().write(body);
+						}))
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(
 								"/",

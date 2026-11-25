@@ -16,6 +16,7 @@ import com.hms.repository.BillRepository;
 import com.hms.repository.DoctorRepository;
 import com.hms.repository.InvoiceRepository;
 import com.hms.repository.PatientRepository;
+import com.hms.security.AuthenticatedUserService;
 
 @Service
 public class InvoiceService {
@@ -24,19 +25,31 @@ public class InvoiceService {
 	private final PatientRepository patientRepository;
 	private final DoctorRepository doctorRepository;
 	private final BillRepository billRepository;
+	private final AuthenticatedUserService authenticatedUserService;
 
 	public InvoiceService(
 			InvoiceRepository invoiceRepository,
 			PatientRepository patientRepository,
 			DoctorRepository doctorRepository,
-			BillRepository billRepository) {
+			BillRepository billRepository,
+			AuthenticatedUserService authenticatedUserService) {
 		this.invoiceRepository = invoiceRepository;
 		this.patientRepository = patientRepository;
 		this.doctorRepository = doctorRepository;
 		this.billRepository = billRepository;
+		this.authenticatedUserService = authenticatedUserService;
 	}
 
 	public List<InvoiceDTO> findAll() {
+		if (authenticatedUserService.isPatientRole()) {
+			Long ownPatientId = authenticatedUserService.getCurrentPatientId();
+			if (ownPatientId == null) {
+				return List.of();
+			}
+			return invoiceRepository.findByPatientId(ownPatientId).stream()
+					.map(InvoiceDTO::fromEntity)
+					.toList();
+		}
 		return invoiceRepository.findAll().stream()
 				.map(InvoiceDTO::fromEntity)
 				.toList();
@@ -45,6 +58,8 @@ public class InvoiceService {
 	public InvoiceDTO findById(long id) {
 		Invoice invoice = invoiceRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Fatura não encontrada: " + id));
+		Long ownerId = invoice.getPatient() != null ? invoice.getPatient().getId() : null;
+		authenticatedUserService.assertCanAccessPatient(ownerId);
 		return InvoiceDTO.fromEntity(invoice);
 	}
 

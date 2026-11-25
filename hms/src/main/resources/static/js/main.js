@@ -33,6 +33,30 @@ const ROUTES = {
 	accessibility: () => renderAccessibilityView()
 };
 
+const VIEW_ROLES = {
+	hospital: ['ADMIN', 'MEDICO', 'FINANCEIRO', 'PACIENTE'],
+	doctors: ['ADMIN', 'MEDICO', 'FINANCEIRO', 'PACIENTE'],
+	patients: ['ADMIN', 'MEDICO', 'FINANCEIRO'],
+	invoices: ['ADMIN', 'FINANCEIRO', 'PACIENTE'],
+	bills: ['ADMIN', 'FINANCEIRO'],
+	dashboard: ['ADMIN', 'FINANCEIRO'],
+	appointments: ['ADMIN', 'MEDICO', 'PACIENTE'],
+	history: ['ADMIN', 'FINANCEIRO', 'PACIENTE'],
+	'doctor-profit': ['ADMIN', 'FINANCEIRO', 'MEDICO'],
+	accessibility: ['ADMIN', 'MEDICO', 'FINANCEIRO', 'PACIENTE']
+};
+
+function canAccessView(view) {
+	const allowed = VIEW_ROLES[view];
+	return Boolean(allowed && sessionStore.hasRole(...allowed));
+}
+
+function applyRoleNavigation() {
+	document.querySelectorAll('.nav-item').forEach((btn) => {
+		btn.classList.toggle('hidden', !canAccessView(btn.dataset.view));
+	});
+}
+
 let currentView = 'hospital';
 let expirationTimer = null;
 
@@ -61,7 +85,7 @@ function handleSessionExpired() {
 }
 
 async function navigateTo(view) {
-	currentView = ROUTES[view] ? view : 'hospital';
+	currentView = ROUTES[view] && canAccessView(view) ? view : 'hospital';
 	document.querySelectorAll('.nav-item').forEach((btn) => {
 		btn.classList.toggle('active', btn.dataset.view === currentView);
 	});
@@ -92,6 +116,7 @@ async function enterApp() {
 	document.getElementById('auth-screen').classList.add('hidden');
 	document.getElementById('app-shell').classList.remove('hidden');
 	updateSessionBadge();
+	applyRoleNavigation();
 	scheduleSessionExpiration();
 	await syncRemoteAccessibilityPrefs();
 	await navigateTo(currentView);

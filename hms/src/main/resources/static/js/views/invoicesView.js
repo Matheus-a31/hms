@@ -1,14 +1,13 @@
+import { sessionStore } from '../core/httpClient.js';
 import { closeModal, escapeHtml, formatCurrency, getViewContainer, openModal, setHeader, showToast, todayIso } from '../core/ui.js';
 import { billApi, doctorApi, invoiceApi, patientApi } from '../services/hmsApi.js';
 
 export async function renderInvoicesView(filterText = '') {
 	setHeader('Gestão Financeira & Faturas');
-	const [invoices, patients, doctors, bills] = await Promise.all([
-		invoiceApi.list(),
-		patientApi.list(),
-		doctorApi.list(),
-		billApi.list()
-	]);
+	const canManage = sessionStore.hasRole('ADMIN', 'FINANCEIRO');
+	const [invoices, patients, doctors, bills] = canManage
+		? await Promise.all([invoiceApi.list(), patientApi.list(), doctorApi.list(), billApi.list()])
+		: [await invoiceApi.list(), [], [], []];
 
 	const filtered = invoices.filter((inv) =>
 		!filterText || String(inv.id).includes(filterText.trim()) ||
@@ -23,8 +22,8 @@ export async function renderInvoicesView(filterText = '') {
 			<td><span class="badge ${inv.paymentStatus === 'PAGO' ? 'badge-success' : 'badge-warning'}">${escapeHtml(inv.paymentStatus)}</span></td>
 			<td>
 				<button type="button" class="link-btn" data-view-invoice="${inv.id}">Ver Detalhes</button>
-				<span class="text-muted">|</span>
-				<button type="button" class="link-btn link-btn-danger" data-delete-invoice="${inv.id}">Excluir</button>
+				${canManage ? `<span class="text-muted">|</span>
+				<button type="button" class="link-btn link-btn-danger" data-delete-invoice="${inv.id}">Excluir</button>` : ''}
 			</td>
 		</tr>
 	`).join('');
@@ -32,7 +31,7 @@ export async function renderInvoicesView(filterText = '') {
 	getViewContainer().innerHTML = `
 		<div class="toolbar">
 			<input id="invoice-search" type="search" class="search-input" value="${escapeHtml(filterText)}" placeholder="Buscar fatura por ID..." aria-label="Buscar fatura por ID">
-			<button type="button" id="btn-new-invoice" class="btn btn-primary">+ Nova Fatura</button>
+			${canManage ? '<button type="button" id="btn-new-invoice" class="btn btn-primary">+ Nova Fatura</button>' : ''}
 		</div>
 		<div class="card">
 			<div class="table-wrap">
@@ -47,9 +46,12 @@ export async function renderInvoicesView(filterText = '') {
 	`;
 
 	document.getElementById('invoice-search').addEventListener('input', (e) => renderInvoicesView(e.target.value));
-	document.getElementById('btn-new-invoice').addEventListener('click', () => renderInvoiceForm(patients, doctors, bills));
+	const newBtn = document.getElementById('btn-new-invoice');
+	if (newBtn) {
+		newBtn.addEventListener('click', () => renderInvoiceForm(patients, doctors, bills));
+	}
 	document.querySelectorAll('[data-view-invoice]').forEach((btn) => {
-		btn.addEventListener('click', () => showInvoiceDetailModal(invoices.find((i) => i.id === Number(btn.dataset.viewInvoice))));
+		btn.addEventListener('click', () => showInvoiceDetailModal(invoices.find((i) => i.id === Number(btn.dataset.viewInvoice)), canManage));
 	});
 	document.querySelectorAll('[data-delete-invoice]').forEach((btn) => {
 		btn.addEventListener('click', async () => {
@@ -60,7 +62,7 @@ export async function renderInvoicesView(filterText = '') {
 	});
 }
 
-function showInvoiceDetailModal(inv) {
+function showInvoiceDetailModal(inv, canManage = false) {
 	openModal(`Detalhes da Fatura #INV-${inv.id}`, `
 		<div class="info-grid" style="padding:0">
 			<div class="info-item"><div class="info-label">Tipo</div><div class="info-value">${escapeHtml(inv.invoiceType)}</div></div>
@@ -71,7 +73,7 @@ function showInvoiceDetailModal(inv) {
 			<div class="info-item"><div class="info-label">Valor Total</div><div class="info-value text-money">${formatCurrency(inv.totalAmount)}</div></div>
 		</div>
 		<div class="form-actions">
-			${inv.paymentStatus !== 'PAGO' ? '<button type="button" id="mark-paid-btn" class="btn btn-primary">Marcar como PAGO</button>' : ''}
+			${canManage && inv.paymentStatus !== 'PAGO' ? '<button type="button" id="mark-paid-btn" class="btn btn-primary">Marcar como PAGO</button>' : ''}
 		</div>
 	`);
 	const paidBtn = document.getElementById('mark-paid-btn');
