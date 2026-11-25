@@ -52,8 +52,28 @@ export function getTokenRemainingMs() {
 	}
 }
 
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+let cachedCsrfToken = null;
+
+async function ensureCsrfToken() {
+	if (cachedCsrfToken) {
+		return cachedCsrfToken;
+	}
+	const response = await fetch('/hms/auth/csrf');
+	if (!response.ok) {
+		throw new Error('Não foi possível obter o token CSRF de segurança.');
+	}
+	const data = await response.json();
+	cachedCsrfToken = data.token;
+	return cachedCsrfToken;
+}
+
 export async function httpRequest(url, options = {}, retryOnUnauthorized = true) {
 	const headers = { ...(options.headers || {}) };
+	const method = (options.method || 'GET').toUpperCase();
+	if (MUTATING_METHODS.has(method)) {
+		headers['X-CSRF-TOKEN'] = await ensureCsrfToken();
+	}
 	const token = sessionStore.getAccessToken();
 	if (token) {
 		headers.Authorization = `Bearer ${token}`;
