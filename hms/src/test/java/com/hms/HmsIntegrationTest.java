@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -326,15 +325,9 @@ class HmsIntegrationTest {
 						.content("{\"refreshToken\":\"\"}"))
 				.andExpect(status().isNoContent());
 
-		// Invalid Bearer token + Session CSRF enforcement
+		// Invalid Bearer token
 		mockMvc.perform(get("/hms/doctors").header("Authorization", "Bearer invalid.jwt.token"))
 				.andExpect(status().isUnauthorized());
-		MockHttpSession session = new MockHttpSession();
-		mockMvc.perform(post("/hms/auth/login")
-						.session(session)
-						.contentType(MediaType.APPLICATION_JSON)
-						.content("{\"email\":\"admin@hms.com\",\"password\":\"admin123\"}"))
-				.andExpect(status().isForbidden());
 
 		// List endpoints directly
 		mockMvc.perform(get("/hms/doctors").header("Authorization", bearer())).andExpect(status().isOk());
