@@ -1,8 +1,11 @@
 package com.hms.controller;
 
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,6 +31,14 @@ public class AuthController {
 
 	public AuthController(AuthService authService) {
 		this.authService = authService;
+	}
+
+	@GetMapping("/csrf")
+	@Operation(summary = "Emitir token CSRF stateless assinado para requisições mutáveis")
+	public ResponseEntity<Map<String, String>> csrf(CsrfToken token) {
+		return ResponseEntity.ok(Map.of(
+				"headerName", token.getHeaderName(),
+				"token", token.getToken()));
 	}
 
 	@PostMapping("/register")
