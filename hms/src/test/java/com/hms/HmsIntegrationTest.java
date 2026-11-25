@@ -2,11 +2,7 @@ package com.hms;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -21,12 +17,15 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hms.model.UserAccount;
 import com.hms.model.UserRole;
 import com.hms.repository.UserAccountRepository;
+import com.hms.security.StatelessCsrfTokenRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -44,11 +43,18 @@ class HmsIntegrationTest {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
+	private String csrfToken;
 	private String accessToken;
 	private String refreshToken;
 
 	@BeforeEach
 	void authenticate() throws Exception {
+		MvcResult csrfResult = mockMvc.perform(get("/hms/auth/csrf"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.token").isNotEmpty())
+				.andReturn();
+		this.csrfToken = objectMapper.readTree(csrfResult.getResponse().getContentAsString()).get("token").asText();
+
 		MvcResult loginResult = mockMvc.perform(post("/hms/auth/login")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"email\":\"admin@hms.com\",\"password\":\"admin123\"}"))
@@ -63,6 +69,42 @@ class HmsIntegrationTest {
 
 	private String bearer() {
 		return "Bearer " + accessToken;
+	}
+
+	private MockHttpServletRequestBuilder post(String url) {
+		return MockMvcRequestBuilders.post(url).header(StatelessCsrfTokenRepository.HEADER_NAME, csrfToken);
+	}
+
+	private MockHttpServletRequestBuilder put(String url) {
+		return MockMvcRequestBuilders.put(url).header(StatelessCsrfTokenRepository.HEADER_NAME, csrfToken);
+	}
+
+	private MockHttpServletRequestBuilder patch(String url) {
+		return MockMvcRequestBuilders.patch(url).header(StatelessCsrfTokenRepository.HEADER_NAME, csrfToken);
+	}
+
+	private MockHttpServletRequestBuilder delete(String url) {
+		return MockMvcRequestBuilders.delete(url).header(StatelessCsrfTokenRepository.HEADER_NAME, csrfToken);
+	}
+
+	@Test
+	void testCsrfProtectionBlocksMissingAndTamperedTokens() throws Exception {
+		String loginBody = "{\"email\":\"admin@hms.com\",\"password\":\"admin123\"}";
+		// Sem header X-CSRF-TOKEN -> 403 Forbidden (aciona accessDeniedHandler do SecurityConfig)
+		mockMvc.perform(MockMvcRequestBuilders.post("/hms/auth/login")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(loginBody))
+				.andExpect(status().isForbidden())
+				.andExpect(jsonPath("$.status").value(403));
+
+		// Formatos inválidos e assinatura adulterada -> 403 Forbidden
+		for (String badToken : new String[] { "", "sem-ponto", ".sem-nonce", "sem-sig.", "nonce.assinatura-adulterada" }) {
+			mockMvc.perform(MockMvcRequestBuilders.post("/hms/auth/login")
+							.header(StatelessCsrfTokenRepository.HEADER_NAME, badToken)
+							.contentType(MediaType.APPLICATION_JSON)
+							.content(loginBody))
+					.andExpect(status().isForbidden());
+		}
 	}
 
 	@Test
